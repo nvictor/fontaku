@@ -36,20 +36,16 @@ jobs:
           fi
           echo "Font file size: $(ls -lh Fontaku.ttf | awk '{print $5}')"
 
-      - name: Extract version from tag
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: Create source images archive
+        run: |
+          tar -czf source-images.tar.gz images/
 
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.get_version.outputs.VERSION }}
-          release_name: Fontaku ${{ steps.get_version.outputs.VERSION }}
+          name: Fontaku ${{ github.ref_name }}
           body: |
-            ## Fontaku Font Release ${{ steps.get_version.outputs.VERSION }}
+            ## Fontaku Font Release ${{ github.ref_name }}
 
             This release contains a pre-built Fontaku font file generated from the latest emoji images.
 
@@ -80,29 +76,10 @@ jobs:
             ---
 
             Generated automatically from commit ${{ github.sha }}
+          files: |
+            Fontaku.ttf
+            source-images.tar.gz
           draft: false
           prerelease: false
-
-      - name: Upload Font Asset
-        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./Fontaku.ttf
-          asset_name: Fontaku.ttf
-          asset_content_type: application/font-sfnt
-
-      - name: Upload Images Archive
-        run: |
-          tar -czf source-images.tar.gz images/
-
-      - name: Upload Source Images
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./source-images.tar.gz
-          asset_name: source-images.tar.gz
-          asset_content_type: application/gzip
